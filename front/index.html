@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédiction d'Obésité</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --accent-color: #e74c3c;
+            --light-bg: #f5f7fa;
+            --dark-text: #2c3e50;
+            --light-text: #ecf0f1;
+            --gray-border: #dcdde1;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+        
+        h2 {
+            position: relative;
+            font-size: 1.5rem;
+            margin: 25px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--gray-border);
+        }
+        
+        .section {
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--gray-border);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-submit {
+            background: var(--accent-color);
+            margin-top: 10px;
+        }
+        
+        .btn-submit:hover {
+            background: #c0392b;
+        }
+        
+        .file-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            flex: 1;
+        }
+        
+        .result {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-weight: 500;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .result.success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left-color: var(--success-color);
+        }
+        
+        .result.error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left-color: var(--accent-color);
+        }
+        
+        .prediction-result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .prediction-category {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .explanation-list {
+            list-style: none;
+        }
+        
+        .explanation-list li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+        
+        .explanation-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .loading .spinner {
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .form-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Centre de Santé - Prédiction d'Obésité</h1>
+            <p>Analysez les données de santé pour prédire les risques d'obésité</p>
+        </header>
+        
+        <div class="section">
+            <h2><i class="fas fa-upload"></i> Données d'entraînement</h2>
+            <div class="file-input-wrapper">
+                <input type="file" id="csvFile" accept=".csv" class="file-input"/>
+                <button class="btn" onclick="sendData()"><i class="fas fa-cloud-upload-alt"></i> Envoyer CSV</button>
+            </div>
+            <div class="loading" id="sendDataLoading">
+                <div class="spinner"></div>
+                <span>Envoi en cours...</span>
+            </div>
+            <div id="sendDataResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2><i class="fas fa-cogs"></i> Entraînement du modèle</h2>
+            <p>Lancez l'entraînement du modèle après avoir chargé vos données.</p>
+            <button class="btn" onclick="trainModel()"><i class="fas fa-brain"></i> Entraîner le modèle</button>
+            <div class="loading" id="trainLoading">
+                <div class="spinner"></div>
+                <span>Entraînement en cours...</span>
+            </div>
+            <div id="trainResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2><i class="fas fa-user-md"></i> Prédiction pour un patient</h2>
+            
+            <form id="predictForm">
+                <div class="form-wrapper">
+                    <!-- Première colonne -->
+                    <div>
+                        <h3>Informations personnelles</h3>
+                        <div class="form-group">
+                            <label for="age">Âge:</label>
+                            <input type="number" id="age" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Genre:</label>
+                            <select id="gender" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="Female">Femme</option>
+                                <option value="Male">Homme</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Taille (cm):</label>
+                            <input type="number" id="height" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Poids (kg):</label>
+                            <input type="number" id="weight" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="family_history_with_overweight">Antécédents familiaux d'obésité:</label>
+                            <select id="family_history_with_overweight" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="yes">Oui</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Deuxième colonne -->
+                    <div>
+                        <h3>Habitudes alimentaires</h3>
+                        <div class="form-group">
+                            <label for="favc" title="Consommation d'aliments à haute valeur calorique">Aliments hautement caloriques (FAVC):</label>
+                            <select id="favc" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="yes">Oui</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fcvc" title="Fréquence de consommation de légumes">Consommation de légumes (FCVC):</label>
+                            <input type="number" id="fcvc" step="any" required min="1" max="3" placeholder="1-3">
+                        </div>
+                        <div class="form-group">
+                            <label for="ncp" title="Nombre de repas principaux">Nombre de repas par jour (NCP):</label>
+                            <input type="number" id="ncp" step="any" required min="1" max="4" placeholder="1-4">
+                        </div>
+                        <div class="form-group">
+                            <label for="caec" title="Consommation de nourriture entre les repas">Grignotage entre repas (CAEC):</label>
+                            <select id="caec" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="Always">Toujours</option>
+                                <option value="Frequently">Fréquemment</option>
+                                <option value="Sometimes">Parfois</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ch2o" title="Consommation d'eau par jour">Consommation d'eau (L/jour):</label>
+                            <input type="number" id="ch2o" step="any" required min="1" max="3" placeholder="1-3">
+                        </div>
+                    </div>
+                    
+                    <!-- Troisième colonne -->
+                    <div>
+                        <h3>Style de vie</h3>
+                        <div class="form-group">
+                            <label for="smoke">Fumeur:</label>
+                            <select id="smoke" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="yes">Oui</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="faf" title="Fréquence d'activité physique">Activité physique (FAF):</label>
+                            <input type="number" id="faf" step="any" required min="0" max="3" placeholder="0-3">
+                        </div>
+                        <div class="form-group">
+                            <label for="tue" title="Temps passé devant des appareils électroniques">Temps d'écran (h/jour):</label>
+                            <input type="number" id="tue" step="any" required min="0" max="2" placeholder="0-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="scc" title="Comptage des calories">Suivi des calories (SCC):</label>
+                            <select id="scc" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="yes">Oui</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="calc" title="Consommation d'alcool">Consommation d'alcool (CALC):</label>
+                            <select id="calc" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="Always">Toujours</option>
+                                <option value="Frequently">Fréquemment</option>
+                                <option value="Sometimes">Parfois</option>
+                                <option value="no">Non</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="mtrans" title="Mode de transport principal">Mode de transport (MTRANS):</label>
+                            <select id="mtrans" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="Automobile">Automobile</option>
+                                <option value="Bike">Vélo</option>
+                                <option value="Motorbike">Moto</option>
+                                <option value="Public_Transportation">Transport public</option>
+                                <option value="Walking">Marche</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-submit" onclick="predict()">
+                    <i class="fas fa-chart-pie"></i> Analyser et prédire
+                </button>
+            </form>
+            
+            <div class="loading" id="predictLoading">
+                <div class="spinner"></div>
+                <span>Prédiction en cours...</span>
+            </div>
+            
+            <div id="predictionResultContainer" class="prediction-result">
+                <div class="prediction-category" id="predictionCategory"></div>
+                <p>Facteurs contribuant à la prédiction :</p>
+                <ul class="explanation-list" id="explanationList"></ul>
+            </div>
+            
+            <div id="predictResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let clientId = null;
+        
+        async function connectBackend() {
+            try {
+                const response = await fetch("http://localhost:8000/connect", { method: "POST" });
+                const data = await response.json();
+                clientId = data.client_id;
+                console.log("Connecté en tant que client:", clientId);
+            } catch (error) {
+                console.error("Erreur de connexion au backend:", error);
+                showResult('sendDataResult', "Erreur de connexion au serveur. Veuillez vérifier que le backend est en cours d'exécution.", 'error');
+            }
+        }
+        
+        window.addEventListener('load', connectBackend);
+        
+        async function sendData() {
+            const fileInput = document.getElementById('csvFile');
+            if (!fileInput.files[0]) {
+                showResult('sendDataResult', "Veuillez sélectionner un fichier CSV", 'error');
+                return;
+            }
+            
+            showLoading('sendDataLoading', true);
+            hideResult('sendDataResult');
+            
+            try {
+                const file = fileInput.files[0];
+                const text = await file.text();
+                const response = await fetch("http://localhost:8000/send_data?client_id=" + clientId, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ csv_str: text })
+                });
+                
+                const data = await response.json();
+                showResult('sendDataResult', data.status, 'success');
+            } catch (error) {
+                console.error("Erreur lors de l'envoi des données:", error);
+                showResult('sendDataResult', "Erreur lors de l'envoi des données. " + error.message, 'error');
+            } finally {
+                showLoading('sendDataLoading', false);
+            }
+        }
+        
+        async function trainModel() {
+            if (!clientId) {
+                showResult('trainResult', "Non connecté au serveur. Veuillez rafraîchir la page.", 'error');
+                return;
+            }
+            
+            showLoading('trainLoading', true);
+            hideResult('trainResult');
+            
+            try {
+                const response = await fetch("http://localhost:8000/train?client_id=" + clientId, {
+                    method: "POST"
+                });
+                
+                const data = await response.json();
+                showResult('trainResult', data.status, 'success');
+            } catch (error) {
+                console.error("Erreur lors de l'entraînement du modèle:", error);
+                showResult('trainResult', "Erreur lors de l'entraînement du modèle. " + error.message, 'error');
+            } finally {
+                showLoading('trainLoading', false);
+            }
+        }
+        
+        async function predict() {
+            // Vérifier que tous les champs sont remplis
+            const form = document.getElementById('predictForm');
+            const inputs = form.querySelectorAll('input, select');
+            let formValid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value) {
+                    input.style.borderColor = 'var(--accent-color)';
+                    formValid = false;
+                } else {
+                    input.style.borderColor = 'var(--gray-border)';
+                }
+            });
+            
+            if (!formValid) {
+                showResult('predictResult', "Veuillez remplir tous les champs du formulaire.", 'error');
+                return;
+            }
+            
+            if (!clientId) {
+                showResult('predictResult', "Non connecté au serveur. Veuillez rafraîchir la page.", 'error');
+                return;
+            }
+            
+            showLoading('predictLoading', true);
+            hideResult('predictResult');
+            document.getElementById('predictionResultContainer').style.display = 'none';
+            
+            try {
+                const age = parseFloat(document.getElementById('age').value);
+                const height = parseFloat(document.getElementById('height').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const fcvc = parseFloat(document.getElementById('fcvc').value);
+                const ncp = parseFloat(document.getElementById('ncp').value);
+                const ch2o = parseFloat(document.getElementById('ch2o').value);
+                const faf = parseFloat(document.getElementById('faf').value);
+                const tue = parseFloat(document.getElementById('tue').value);
+                const gender = document.getElementById('gender').value;
+                const family_history_with_overweight = document.getElementById('family_history_with_overweight').value;
+                const favc = document.getElementById('favc').value;
+                const caec = document.getElementById('caec').value;
+                const smoke = document.getElementById('smoke').value;
+                const scc = document.getElementById('scc').value;
+                const calc = document.getElementById('calc').value;
+                const mtrans = document.getElementById('mtrans').value;
+                
+                const payload = {
+                    Age: age,
+                    Height: height,
+                    Weight: weight,
+                    FCVC: fcvc,
+                    NCP: ncp,
+                    CH2O: ch2o,
+                    FAF: faf,
+                    TUE: tue,
+                    Gender: gender,
+                    family_history_with_overweight: family_history_with_overweight,
+                    FAVC: favc,
+                    CAEC: caec,
+                    SMOKE: smoke,
+                    SCC: scc,
+                    CALC: calc,
+                    MTRANS: mtrans
+                };
+                
+                const response = await fetch("http://localhost:8000/predict?client_id=" + clientId, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showResult('predictResult', "Erreur : " + data.error, 'error');
+                } else if (data.prediction && data.prediction.explanation) {
+                    // Afficher le résultat dans le conteneur spécial
+                    const resultContainer = document.getElementById('predictionResultContainer');
+                    const categoryElem = document.getElementById('predictionCategory');
+                    const explanationList = document.getElementById('explanationList');
+                    
+                    // Définir la catégorie
+                    categoryElem.textContent = `Prédiction: ${formatObesityCategory(data.prediction.prediction)}`;
+                    
+                    // Vider et remplir la liste des explications
+                    explanationList.innerHTML = '';
+                    data.prediction.explanation.forEach(factor => {
+                        const li = document.createElement('li');
+                        li.textContent = factor;
+                        explanationList.appendChild(li);
+                    });
+                    
+                    // Afficher le conteneur de résultat
+                    resultContainer.style.display = 'block';
+                } else {
+                    showResult('predictResult', "Réponse inattendue du serveur.", 'error');
+                }
+            } catch (error) {
+                console.error("Erreur lors de la prédiction:", error);
+                showResult('predictResult', "Erreur lors de la prédiction. " + error.message, 'error');
+            } finally {
+                showLoading('predictLoading', false);
+            }
+        }
+        
+        function formatObesityCategory(category) {
+            const categories = {
+                'Insufficient_Weight': 'Poids insuffisant',
+                'Normal_Weight': 'Poids normal',
+                'Overweight_Level_I': 'Surpoids de niveau I',
+                'Overweight_Level_II': 'Surpoids de niveau II',
+                'Obesity_Type_I': 'Obésité de type I',
+                'Obesity_Type_II': 'Obésité de type II',
+                'Obesity_Type_III': 'Obésité de type III'
+            };
+            
+            return categories[category] || category;
+        }
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'result ' + type;
+            element.style.display = 'block';
+        }
+        
+        function hideResult(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'none';
+        }
+        
+        function showLoading(elementId, show) {
+            const element = document.getElementById(elementId);
+            element.style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>

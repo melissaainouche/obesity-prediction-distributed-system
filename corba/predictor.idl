@@ -1,0 +1,12 @@
+module MyPredictor {
+    interface Predictor {
+        // Envoie de nouvelles données d'entraînement (au format CSV)
+        string sendTrainingData(in string csvData);
+
+        // Lance l'entraînement du modèle sur le fichier CSV fusionné
+        string trainModel();
+
+        // Fait une prédiction sur un nouveau cas (features encodées en JSON ou CSV)
+        string predict(in string inputData);
+    };
+};

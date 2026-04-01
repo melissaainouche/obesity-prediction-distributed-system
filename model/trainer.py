@@ -1,3 +1,19 @@
+"""
+Obesity Prediction - Association Rule Classifier
+-----------------------------------------------
+This module implements a rule-based classifier using Apriori algorithm.
+
+Functions:
+- create_bins_dict(): Creates bins for numerical features using qcut (4 intervals)
+- extract_association_rules(): Extracts association rules with Apriori
+- train_association_classifier(): Main training function for rule-based classifier
+
+Parameters:
+- min_support: 0.08
+- min_confidence: 0.6
+"""
+
+
 # import pandas as pd
 # import xgboost as xgb
 # import pickle

@@ -1,3 +1,23 @@
+"""
+Obesity Prediction - Rule-based Inference Engine
+------------------------------------------------
+Predicts obesity class using association rules extracted from training data.
+
+Workflow:
+1. Load precomputed bins and association rules from training phase
+2. Transform input instance using bins (discretization)
+3. Match instance items against rule antecedents
+4. Return prediction from highest confidence rule with explanation
+
+Functions:
+- load_model(): Loads rules and bins from pickle files
+- discretize_value(): Applies bins to numerical values
+- transform_instance(): Converts instance to discrete format
+- apply_association_rules(): Matches rules against instance
+- predict_with_apriori(): Main prediction function
+"""
+
+
 # import pickle
 # import shap
 # import numpy as np
